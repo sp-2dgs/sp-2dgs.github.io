@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Unveiling an empty street from crowded observations captured by in-car cameras is crucial for autonomous driving. However, removing all temporary static objects, such as stopped vehicles and standing pedestrians, presents a significant challenge. Unlike object-centric 3D inpainting, which relies on thorough observation in a small scene, street scenes involve long trajectories that differ from previous 3D inpainting tasks. The camera-centric moving environment of captured videos further complicates the task due to the limited degree and time duration of object observation.
+      To address these obstacles, we introduce StreetUnveiler to reconstruct an empty street. 
+      StreetUnveiler learns a 3D representation of the empty street from crowded observations.
+      Our representation is based on the hard-label semantic 2D Gaussian Splatting (2DGS) for its scalability and ability to identify Gaussians to be removed.
+      We inpaint rendered image after removing unwanted Gaussians to provide pseudo-labels and subsequently re-optimize the 2DGS.
+      Given its temporal continuous movement, we divide the empty street scene into observed, partial-observed, and unobserved regions, which we propose to locate through a rendered alpha map.
+      This decomposition helps us to minimize the regions that need to be inpainted.
+      To enhance the temporal consistency of the inpainting, we introduce a novel time-reversal framework to inpaint frames in reverse order and use later frames as references for earlier frames to fully utilize the long-trajectory observations.
+      Our experiments conducted on the street scene dataset successfully reconstructed a 3D representation of the empty street. The mesh representation of the empty street can be extracted for further applications."
+    />
+    <meta name="keywords" content="Empty Street Reconstruction, 3D inpainting" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      3D StreetUnveiler with Semantic-Aware 2DGS
+    </title>
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="./static/css/bulma.min.css" />
+    <link rel="stylesheet" href="./static/css/bulma-carousel.min.css" />
+    <link rel="stylesheet" href="./static/css/bulma-slider.min.css" />
+    <link rel="stylesheet" href="./static/css/fontawesome.all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css"
+    />
+    <link rel="stylesheet" href="./static/css/index.css" />
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script defer src="./static/js/fontawesome.all.min.js"></script>
+    <script src="./static/js/bulma-carousel.min.js"></script>
+    <script src="./static/js/bulma-slider.min.js"></script>
+
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛣</text></svg>">
+
+    <link rel="stylesheet" href="./static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./static/css/app.css"/>
+    <script src="./static/js/app.js"></script>
+    <link rel="stylesheet" href="./static/css/dics.min.css"/>
+    <script src="./static/js/dics.min.js"></script>
+    <script src="./static/js/video_comparison.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', domReady);
+        function domReady() {
+            for (const e of document.querySelectorAll(".b-dics")) {
+                new Dics({
+                    container: e,
+                    textPosition: "top"
+                });
+            }
+        }
+    </script>
+    <script src="./static/js/index.js"></script>
+    <script src="./static/js/zotero-meta.js"></script>
+    <script>
+      $(document).ready(function () {
+        const citations = [
+          {
+            name: "citation_title",
+            content:
+              "3D StreetUnveiler with Semantic-Aware 2DGS",
+          },
+          {
+            name: "citation_author",
+            content: "Xu, Jingwei",
+          },
+          {
+            name: "citation_author",
+            content: "Wang, Yikai",
+          },
+          {
+            name: "citation_author",
+            content: "Zhao, Yiqun",
+          },
+          {
+            name: "citation_author",
+            content: "Fu, Yanwei",
+          },
+          {
+            name: "citation_author",
+            content: "Gao, Shenghua",
+          },
+          {
+            name: "citation_date",
+            content: "2024/5/30",
+          },
+          {
+            name: "citation_online_date",
+            content: "2024/5/28",
+          },
+          {
+            name: "citation_pdf_url",
+            content: "https://arxiv.org/pdf/2405.18416",
+          },
+          {
+            name: "citation_arxiv_id",
+            content: "2405.18416",
+          },
+          {
+            name: "citation_abstract",
+            content:
+              "Unveiling an empty street from crowded observations captured by in-car cameras is crucial for autonomous driving. However, removing all temporarily static objects, such as stopped vehicles and standing pedestrians, presents a significant challenge. Unlike object-centric 3D inpainting, which relies on thorough observation in a small scene, street scene cases involve long trajectories that differ from previous 3D inpainting tasks. The camera-centric moving environment of captured videos further complicates the task due to the limited degree and time duration of object observation. To address these obstacles, we introduce StreetUnveiler to reconstruct an empty street. StreetUnveiler learns a 3D representation of the empty street from crowded observations. Our representation is based on the hard-label semantic 2D Gaussian Splatting (2DGS) for its scalability and ability to identify Gaussians to be removed. We inpaint rendered image after removing unwanted Gaussians to provide pseudo-labels and subsequently re-optimize the 2DGS. Given its temporal continuous movement, we divide the empty street scene into observed, partial-observed, and unobserved regions, which we propose to locate through a rendered alpha map. This decomposition helps us to minimize the regions that need to be inpainted. To enhance the temporal consistency of the inpainting, we introduce a novel time-reversal framework to inpaint frames in reverse order and use later frames as references for earlier frames to fully utilize the long-trajectory observations. Our experiments conducted on the street scene dataset successfully reconstructed a 3D representation of the empty street. The mesh representation of the empty street can be extracted for further applications.",
+          },
+        ];
+        createCitationMeta(citations);
+      });
+    </script>
+  </head>
+
+  <style>
+    button {
+      padding: 0.5em 0.75em;
+      margin: 0.4em 0.4em;
+      /* min-width: 18ch; */
+      /* max-width: 18ch; */
+      text-align: left;
+      background-color: #ddd;
+      color: #333;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    
+      @media screen and (-ms-high-contrast: active) {
+        border: 2px solid currentcolor;
+      }
+    }
+  </style>
+  <body>
+
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <h1 class="title is-1 publication-title" style="font-size: 36px">
+                  3D StreetUnveiler with Semantic-Aware 2DGS
+              </h1>
+              <div class="is-size-5 publication-authors">
+                <span class="author-block" style="font-size: 22px">
+                  <a href="https://davidxu-jj.github.io/">Jingwei Xu</a ><sup>1</sup>,
+                </span>
+                <span class="author-block" style="font-size: 22px">
+                  <a href="https://yikai-wang.github.io/">Yikai Wang</a ><sup>2</sup>,
+                </span>
+                <span class="author-block" style="font-size: 22px">
+                  <a href="https://scholar.google.com/citations?user=1UD_eBQAAAAJ&hl=en">Yiqun Zhao</a ><sup>1</sup>,
+                </span>
+                <span class="author-block" style="font-size: 22px">
+                  <a href="https://scholar.google.co.uk/citations?user=Vg54TcsAAAAJ&hl=en">Yanwei Fu</a ><sup>2</sup>,
+                </span>
+                <span class="author-block" style="font-size: 22px">
+                  <a href="https://scholar.google.com.sg/citations?user=fe-1v0MAAAAJ&hl=en">Shenghua Gao</a ><sup>1†</sup>,
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <span class="author-block" style="font-size: 18px"
+                  ><sup>1</sup>ShanghaiTech University
+                </span>
+                <span class="author-block" style="font-size: 18px"
+                  ><sup>2</sup>Fudan University
+                </span>
+              </div>
+              <div class="is-size-5 publication-authors">
+                († denotes the corresponding author)
+              </div>
+              <div class="column has-text-centered">
+                <div class="link-block">
+                  <!-- PDF Link. -->
+                  <!-- TODO -->
+                  <!-- <span class="link-block">
+                    <a
+                      href=""
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fas fa-file-pdf"></i>
+                      </span>
+                      <span>Paper(Coming soon)</span>
+                    </a>
+                  </span> -->
+                  <span class="link-block">
+                    <a
+                      href="https://arxiv.org/abs/2405.18416"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="ai ai-arxiv"></i>
+                      </span>
+                      <span>arXiv</span>
+                    </a>
+                  </span>
+                  <!-- <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Supplementary</span>
+                </a>
+              </span> -->
+                  <!-- Video Link. -->
+                  <!-- <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+                  <!-- Code Link. -->
+                  <!-- TODO -->
+                  <span class="link-block">
+                    <a
+                      href="https://github.com/DavidXu-JJ/StreetUnveiler"
+                      class="external-link button is-normal is-rounded is-dark"
+                    >
+                      <span class="icon">
+                        <i class="fab fa-github"></i>
+                      </span>
+                      <span>Code</span>
+                    </a>
+                  </span>
+                  <!-- Dataset Link. -->
+                  <!-- <span class="link-block">
+                <a href="https://mega.nz/folder/jdhDnTqL#Ija678SU2Va_JJOiwqmdEg"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                </a>
+              </span> -->
+                </div>
+              </div>
+
+              <!-- <div style="font-size: 10px"> -->
+              <!--   <a href="https://www.zotero.org/" -->
+              <!--     ><b style="color: #a6212c">Z</b>otero Connector</a -->
+              <!--   > -->
+              <!--   friendly -->
+              <!-- </div> -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <img src="static/images/teaser.png" alt="StreetUnveiler" />
+          <h2 class="subtitle has-text-centered" style="font-size: 16px">
+            <b>StreetUnveiler</b>: We achieve accurate reconstruction from in-car camera videos. With the aid of the proposed hard-label semantic 2D Gaussian Splatting and proposed time-reversal inpainting framework, we remove the unwanted objects with satisfactory appearance and geometry of occluded regions.          </h2>
+        </div>
+      </div>
+    </section>
+
+    <div class="columns is-centered has-text-centered" id="video">
+      <div class="column is-four-fifths">
+        <h2 class="title is-2">Demo</h2>
+        <!-- <video class="video" width=100% id="original" loop playsinline autoplay muted src="./static/videos/demo.mp4" onplay="resizeAndPlay(this)"></video> --> 
+
+        <video controls>
+          <source src="./static/videos/demo.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+      </video>
+      </div>
+    </div>
+
+
+
+    <section class="section">
+
+
+      <div class="columns is-centered has-text-centered" id="video">
+        <div class="column is-four-fifths">
+          <h2 class="title is-2">Main Experiment Comparison</h2>
+          <!-- <h3> Select which experiment to compare.</h3>
+          <button>Main Experiment</button>
+          <button id="nvsButton">Novel View Synthesis</button> -->
+          <!-- <br> -->
+          <!-- <br> -->
+          <h3> Select which methods to compare.</h3>
+          <button id="Data">Training Data</button>
+          <button id="LaMa">LaMa</button>
+          <button id="SDXL">SDXL</button>
+          <button id="ProPainter">ProPainter</button>
+          <button id="SPIn-NeRF">SPIn-NeRF(in 2DGS)</button>
+          <button id="Infusion">Infusion</button>
+          <!-- <button id="Scene5">Scene5</button> -->
+          <!-- <h4 id="pathText">File path: <strong>"./static/videos/Experiment/scene1/data_vs_ours.mp4"</strong> </h4> -->
+          <h4 >(Please refresh if you don't see the video. Switch video will need some time to process.)</h4>
+          <h3 id="compareText">
+            Training Data
+            &nbsp;&nbsp; 
+            VS
+            &nbsp;&nbsp;
+            Ours
+          </h3>
+          <video class="video" width=100% id="xyalias" loop playsinline autoplay muted src="./static/videos/Experiment/scene1/data_vs_ours.mp4" onplay="resizeAndPlay(this)"></video>
+          <canvas height=0 class="videoMerge" id="xyaliasMerge"></canvas>
+
+          <br>
+          <!-- <br> -->
+          <!-- <h3> Select which scenes to compare.</h3> -->
+          <button id="Scene1">Scene1</button>
+          <button id="Scene2">Scene2</button>
+          <button id="Scene3">Scene3</button>
+          <button id="Scene4">Scene4</button>
+          <br>
+          <h4> (Click here to switch the scene)</h>
+          <!-- <br>
+          <br>
+          <video class="video" width=100% id="original" loop playsinline autoplay muted src="./static/videos/Experiment/scene1/data_vs_ours.mp4" onplay="resizeAndPlay(this)"></video> -->
+
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="columns is-centered has-text-centered" id="video">
+          <div class="column is-four-fifths">
+            <h2 class="title is-2">Novel View Synthesis</h2>
+            <!-- <h4 id="pathText">File path: <strong>"../videos/NVS/nvs1.mp4"</strong> </h4> -->
+            <h4 >(Please refresh if you don't see the video. Switch video will need some time to process.)</h4>
+            <video id="original", controls>
+              <source src="./static/videos/NVS/nvs2.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            <br>
+            <button id="NVSScene1">Scene1</button>
+            <button id="NVSScene2">Scene2</button>
+            <br>
+            <h4> (Click here to switch the scene)</h>
+          </div>
+        </div>
+
+      <script>
+        let sceneNumber = 1;
+        let lastFile = 'data_vs_ours.mp4';
+        let lastText = 'Training Data';
+        const video = document.getElementById('xyalias');
+        // const original_video = document.getElementById('original');
+        const buttonData = document.getElementById('Data');
+        const buttonLaMa = document.getElementById('LaMa');
+        const buttonSDXL = document.getElementById('SDXL');
+        const buttonProPainter = document.getElementById('ProPainter');
+        const buttonSPIn = document.getElementById('SPIn-NeRF');
+        const buttonInfusion = document.getElementById('Infusion');
+
+        const text = document.getElementById('compareText');
+        const pathText = document.getElementById('pathText');
+
+        const updateVideoSource = (source, name) => {
+          video.src = `./static/videos/Experiment/scene${sceneNumber}/${source}`;
+          // original_video.src = `./static/videos/Experiment/scene${sceneNumber}/${source}`;
+          text.innerHTML = `${name}&nbsp;&nbsp;VS&nbsp;&nbsp;Ours`;
+          lastFile = source;
+          lastText = name;
+          // pathText.innerHTML = `File path: <strong>"./static/videos/Experiment/scene${sceneNumber}/${source}"</strong>`;
+        };
+
+
+        document.getElementById('Data').addEventListener('click', () => {
+          updateVideoSource('data_vs_ours.mp4', 'Training Data');
+        });
+
+        document.getElementById('LaMa').addEventListener('click', () => {
+          updateVideoSource('lama_vs_ours.mp4', 'LaMa');
+        });
+
+        document.getElementById('SDXL').addEventListener('click', () => {
+          updateVideoSource('sdxl_vs_ours.mp4', 'SDXL');
+        });
+
+        document.getElementById('ProPainter').addEventListener('click', () => {
+          updateVideoSource('propainter_vs_ours.mp4', 'ProPainter');
+        });
+
+        document.getElementById('SPIn-NeRF').addEventListener('click', () => {
+          updateVideoSource('spin_vs_ours.mp4', 'SPIn-NeRF(in 2DGS)');
+        });
+
+        document.getElementById('Infusion').addEventListener('click', () => {
+          updateVideoSource('infusion_vs_ours.mp4', 'Infusion');
+        });
+
+        document.getElementById('Scene1').addEventListener('click', () => {
+          sceneNumber = 1; 
+          updateVideoSource(lastFile, lastText)
+        });
+
+        document.getElementById('Scene2').addEventListener('click', () => {
+          sceneNumber = 2; 
+          updateVideoSource(lastFile, lastText)
+        });
+
+        document.getElementById('Scene3').addEventListener('click', () => {
+          sceneNumber = 3; 
+          updateVideoSource(lastFile, lastText)
+        });
+  
+        document.getElementById('Scene4').addEventListener('click', () => {
+          sceneNumber = 4; 
+          updateVideoSource(lastFile, lastText)
+        });
+
+        // document.getElementById('Scene5').addEventListener('click', () => {
+        //   sceneNumber = 5; 
+        //   updateVideoSource(lastFile, lastText)
+        // });
+
+        // document.getElementById("nvsButton").onclick = function () {
+        //     location.href = "nvs.html";
+        // };
+
+        let sceneNumberNVS = 2;
+        const original_video = document.getElementById('original');
+
+        const updateNVSVideoSource = () => {
+            original_video.src = `./static/videos/NVS/nvs${sceneNumberNVS}.mp4`;
+            pathText.innerHTML = `File path: <strong>"../videos/NVS/nvs${sceneNumberNVS}.mp4"</strong>`;
+        };
+
+        document.getElementById('NVSScene1').addEventListener('click', () => {
+          sceneNumberNVS = 2; 
+          updateNVSVideoSource()
+        });
+
+        document.getElementById('NVSScene2').addEventListener('click', () => {
+          sceneNumberNVS = 1; 
+          updateNVSVideoSource()
+        });
+
+        // document.getElementById("mainExp").onclick = function () {
+        //     location.href = "index.html";
+        // };
+        
+  
+        </script>
+    </section>
+
+   
+    <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <h2 class="title">BibTeX</h2>
+        <!-- TODO -->
+        <pre><code> @misc{xu2024StreetUnveiler,
+      title={3D StreetUnveiler with Semantic-Aware 2DGS}, 
+      author={Jingwei Xu and Yikai Wang and Yiqun Zhao and Yanwei Fu and Shenghua Gao},
+      year={2024},
+      eprint={2405.18416},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+</code></pre>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="content has-text-centered">
+          <!-- TODO -->
+          <a class="icon-link" href="https://arxiv.org/abs/2405.18416">
+            <i class="fas fa-file-pdf"></i>
+          </a>
+            <!-- TODO -->
+          <a
+            class="icon-link"
+            href="https://github.com/DavidXu-JJ/StreetUnveiler"
+            class="external-link"
+            disabled
+          >
+            <i class="fab fa-github"></i>
+          </a>
+        </div>
+        <div class="columns is-centered">
+          <div class="column is-8">
+            <div class="is-size-5">
+                Website template is borrowed from Seal-3D.
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      bulmaCarousel.attach("#geo-carousel", {
+        slidesToScroll: 1,
+        slidesToShow: 1,
+        infinite: true,
+      });
+      bulmaCarousel.attach("#novel-carousel", {
+        slidesToScroll: 1,
+        slidesToShow: 2,
+        infinite: true,
+      });
+      bulmaCarousel.attach("#edit-carousel", {
+        slidesToScroll: 1,
+        slidesToShow: 2,
+        infinite: true,
+      });
+    </script>
+  </body>
+</html>
